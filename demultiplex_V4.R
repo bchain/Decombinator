@@ -18,9 +18,13 @@ mm2<-2
 #expt number
 expt<-"38"
 
-#position of barcode
+#position of barcode in read 3
 start_bc<-1
 end_bc<-6
+
+#position of index in read 1 (at the moment usually positions 7-12 immediately after barcode)
+indexR1_b<-7
+indexR1_e<-12
 #path to data
 path_data<-paste("c:\\New folder\\expt_",expt,"\\",sep="")
 
@@ -70,8 +74,9 @@ seqsR1_fq_bc<-ShortReadQ(sread=seqsR1_bc,quality=q,id=id(seqsR1_fq))
 
 #a<-BStringSet(quality(seqsR1_fq))
 
-#extract index from read 1 (found between position 7 and 12)
-index_seq<-substr(R1_reads,7,12)
+#extract index from read 1 (usually found between position 7 and 12; set above)
+#index_seq<-substr(R1_reads,7,12)
+index_seq<-substr(R1_reads,indexR1_b,indexR1_e)
 #index using agrep
 #first move the necessary data files and objects to the parallel cores
 clusterExport(cl,c("fmatch_SP1","mm1","SP1_i"))
