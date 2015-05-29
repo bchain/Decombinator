@@ -1,9 +1,16 @@
 #If not already set, set path which ontains the index files; 
 #and will contain the output folder. 
-#setwd("31_12_2014\\")
-#set output directory within this working directory
-output<-"output"
-dir.create(output)
+
+#work path to dropbox
+dropbox<-"D:/"
+#path for index files
+index1<-paste(dropbox,"Dropbox/github/decombinator/SP1_indeces.txt",sep="")
+index2<-paste(dropbox,"Dropbox/github/decombinator/SP2_indeces.txt",sep="")
+#Set path to data
+#path_data<-paste("D:\\New folder\\expt_",expt,"\\",sep="")
+path_data<-"D:/TcRSequence_Raw/Expt_44(MiSeq31)/"
+
+
 library(parallel)
 library("ShortRead")
 library("stringdist")
@@ -11,31 +18,39 @@ library("stringdist")
 cores<-detectCores()
 cl <- makeCluster(cores) 
 #######################################################################################################################
-#number of missmatches allowed 
-mm1<-1
+#Set maximum number of missmatches allowed 
+#missmatches for SP1 indeces
+mm1<-2
+#missmatches for SP2 indeces
 mm2<-2
 
-#expt number
-expt<-"38"
+#Set expt number
+expt<-"44"
 
-#position of barcode in read 3
-start_bc<-1
-end_bc<-6
+#Path for output 
+output<-paste(dropbox,"Dropbox/R/26_05_2015/output_",expt,sep="")
+dir.create(output)
+#Set position of barcode in read 3
+#short oligo SP2-6N
+#start_bc<- 1
+#end_bc<- 6
 
+#long oligo SP2-I8.1-6N-I8.1-6N
+start_bc<- 1
+end_bc<- 28
 #position of index in read 1 (at the moment usually positions 7-12 immediately after barcode)
 indexR1_b<-7
 indexR1_e<-12
-#path to data
-path_data<-paste("c:\\New folder\\expt_",expt,"\\",sep="")
 
-#data files names
+
+#Set data files names
 name1<-"R1.fastq.gz"
 name2<-"R2.fastq.gz"
 name3<-"R3.fastq.gz"
 ########################################################################################################################
 #read in indeces for SP1
-SP1_i<-read.table("SP1_indeces.txt",sep="\t",stringsAsFactors=FALSE)
-SP2_i<-read.table("SP2_indeces.txt",sep="\t",stringsAsFactors=FALSE)
+SP1_i<-read.table(index1,sep="\t",stringsAsFactors=FALSE)
+SP2_i<-read.table(index2,sep="\t",stringsAsFactors=FALSE)
 #calcualte hamming distnace between indeces.
 #a<-stringdistmatrix(SP1_i[2,],SP1_i[2,],method="hamming")
 #note that 5 and 14 only differ by two
@@ -46,7 +61,7 @@ SP2_i<-read.table("SP2_indeces.txt",sep="\t",stringsAsFactors=FALSE)
 fmatch_SP1<-function(x){agrep(x,SP1_i[2,],max.distance=list(ins=0,del=0,sub=mm1))}
 fmatch_SP2<-function(x){agrep(x,SP2_i[2,],max.distance=list(ins=0,del=0,sub=mm2))}
 
-#fields with for data
+#files for data
 file1<-paste(path_data,name1,sep="")
 file2<-paste(path_data,name2,sep="")
 file3<-paste(path_data,name3,sep="")
@@ -68,7 +83,10 @@ if(length(seqsR3_fq)==length(seqsR1_fq)){bar_codes<-substr(sread(seqsR3_fq),star
 R1_reads<-sread(seqsR1_fq)
 seqsR1_bc<-DNAStringSet(paste(R1_reads,bar_codes,sep=""))
 #adjust quality reads to same length 
-q<-BStringSet(paste(quality(quality(seqsR1_fq)),"XXXXXX",sep=""))
+#Xs added to quality to ensure same length as read length
+X<-paste(rep("X",(end_bc-start_bc+1)),collapse="")
+q<-BStringSet(paste(quality(quality(seqsR1_fq)),X,sep=""))
+
 #create a new FastQ file for output
 seqsR1_fq_bc<-ShortReadQ(sread=seqsR1_bc,quality=q,id=id(seqsR1_fq))
 
@@ -126,7 +144,7 @@ stopCluster(cl)
 
 ########################################################################################################################
 #count number of seqeunces in each file and output a summary Table
-dir_output<-dir("output\\")
+dir_output<-dir(output)
 seq_names<-strsplit(dir_output,"_")
 output_summary<-rep(0,length(dir_output)*3)
 dim(output_summary)<-c(length(dir_output),3)
@@ -135,7 +153,7 @@ output_summary[,2]<-sapply(seq_names,"[[", 2, simplify =TRUE )
 #cycle thyough files and count the reads
 f<-1
 for (file in dir_output){
-  file_n<-paste("output\\",file,sep="")
+  file_n<-paste(output,"/",file,sep="")
   
 Seq<-FastqStreamer(file_n)
 l<-0
@@ -146,14 +164,14 @@ close(Seq)
 output_summary[f,3]<-l
 f<-f+1
       }#end of directory
-write.table(output_summary,"output_summary.txt",sep="\t",row.names=FALSE,col.names=FALSE)
+write.table(output_summary,paste(output,"_summary.txt",sep=""),sep="\t",row.names=FALSE,col.names=FALSE)
 #plot all columns whihc contain more than 0.1% reads
 plot_sum<-sort(as.numeric(output_summary[,3]),decreasing=TRUE)
 p<-plot_sum/sum(plot_sum)
 plot_sum_f<-plot_sum[which(p>0.001)]
 x<-(1:length(plot_sum_f))
 barplot(plot_sum_f,names.arg=x,cex.names=0.8,cex.axis=0.8)
-imageSave(paste("frequency_plot_",expt,".png",sep=""))
+imageSave(paste(output,"frequency_plot_",expt,".png",sep=""))
 
 
 #rm(list=ls(all=TRUE))
