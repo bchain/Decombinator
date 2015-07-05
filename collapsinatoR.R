@@ -91,3 +91,13 @@ i<-i+1
 
 #if necessayr can reload file
 load(paste(dropbox,"R/26_05_2015/","processed_data_115",sep=""))
+#save each set of results as a separate tab delimited file.
+l<-length(TCR_115)
+j<-1
+file_name<-substring(names(TCR_115)[j],1, (nchar(names(TCR_115)[j])-6))
+output_each<-paste(dropbox,"R/26_05_2015/",file_name,".txt",sep="")
+for (j in 1:l){
+  file_name<-substring(names(TCR_115)[j],1, (nchar(names(TCR_115)[j])-6))
+  output_each<-paste(dropbox,"R/26_05_2015/",file_name,".txt",sep="")
+  write.table(TCR_115[[j]],output_each,sep="\t",row.names=FALSE)
+}
