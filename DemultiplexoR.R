@@ -1,35 +1,23 @@
-#If not already set, set path which ontains the index files; 
-#and will contain the output folder. 
-
-#work path to dropbox
-dropbox<-"D:/"
-#path for index files
-index1<-paste(dropbox,"Dropbox/github/decombinator/SP1_indeces.txt",sep="")
-index2<-paste(dropbox,"Dropbox/github/decombinator/SP2_indeces.txt",sep="")
-#Set path to data
-#path_data<-paste("D:\\New folder\\expt_",expt,"\\",sep="")
-path_data<-"D:/TcRSequence_Raw/Expt_44(MiSeq31)/"
-
-
+#Script for dumpltiplexing the Illumina reads  
+#libraries needed
 library(parallel)
 library("ShortRead")
 library("stringdist")
-
-cores<-detectCores()
-cl <- makeCluster(cores) 
-#######################################################################################################################
-#Set maximum number of missmatches allowed 
-#missmatches for SP1 indeces
-mm1<-2
-#missmatches for SP2 indeces
-mm2<-2
-
+#work path to dropbox (this is site dependent)
+dropbox<-"D:/"
 #Set expt number
-expt<-"44"
+expt<-"47"
+
+#INPUT and OUTPUT paths
+#path_data<-paste("D:\\New folder\\expt_",expt,"\\",sep="")
+#path_data<-"D:/TcRSequence_Raw/Expt_44(MiSeq31)/"
+path_data<-"C:/TCR/input/"
 
 #Path for output 
-output<-paste(dropbox,"Dropbox/R/26_05_2015/output_",expt,sep="")
-dir.create(output)
+output<-paste("C:/TCR/output",sep="")
+#dir.create(output)
+
+
 #Set position of barcode in read 3
 #short oligo SP2-6N
 #start_bc<- 1
@@ -38,24 +26,39 @@ dir.create(output)
 #long oligo SP2-I8.1-6N-I8.1-6N
 start_bc<- 1
 end_bc<- 28
+
+
+#######################################################################################################################
+#a number of parameters whihc can normally be left unchanged
+#Set maximum number of missmatches allowed 
+#missmatches for SP1 indeces
+mm1<-2
+#missmatches for SP2 indeces
+mm2<-2
+
+#set number of cores
+cores<-detectCores()
+cl <- makeCluster(12) 
+
 #position of index in read 1 (at the moment usually positions 7-12 immediately after barcode)
 indexR1_b<-7
 indexR1_e<-12
 
-
-#Set data files names
+#Set data files names. R1 is forward read; R2 is Illumina index read;
+#R3 is reverse read.
 name1<-"R1.fastq.gz"
 name2<-"R2.fastq.gz"
 name3<-"R3.fastq.gz"
+
+#path for index files
+index1<-paste(dropbox,"Dropbox/github/decombinator/SP1_indeces.txt",sep="")
+index2<-paste(dropbox,"Dropbox/github/decombinator/SP2_indeces.txt",sep="")
+
 ########################################################################################################################
+
 #read in indeces for SP1
 SP1_i<-read.table(index1,sep="\t",stringsAsFactors=FALSE)
 SP2_i<-read.table(index2,sep="\t",stringsAsFactors=FALSE)
-#calcualte hamming distnace between indeces.
-#a<-stringdistmatrix(SP1_i[2,],SP1_i[2,],method="hamming")
-#note that 5 and 14 only differ by two
-#read in indeces for SP2
-
 
 #function which does fuzzy match to SP1 and SP2
 fmatch_SP1<-function(x){agrep(x,SP1_i[2,],max.distance=list(ins=0,del=0,sub=mm1))}

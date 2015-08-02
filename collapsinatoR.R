@@ -1,18 +1,17 @@
-#analysis of Unilever patient 115
-i<-1
+#script to collapse seqeunce data to single barcodes and collect numbers
 #initialise file to contain output
-TCR_115<-list()
+expt<-45
+output<-list()
 #path to expt 
 #from my work computer
 dropbox<-"D:/dropbox/"
 #at home
 dropbox<-"C:/Users/Benny Chain/dropbox/"
-#define the directory to be analysed
-#path to expgt
-expt_path<-paste(dropbox,"TcR_seqs/Expt42/",sep="")
-expt_path<-paste(dropbox,"TcR_seqs/Expt44/",sep="")
-directory<-dir(expt_path)
 
+#Data input 
+expt_path<-"C:/TCR/input/"
+#output
+output_path<-"c:/output/"
 
 ####################################################################################################################
 ####################################################################################################################
@@ -20,29 +19,32 @@ directory<-dir(expt_path)
 #extracting unique TCR RNAs (i.e. collaping on bar codes) and 
 #then unique TCRs and storing the 6 part identifier (including CDR3)
 #in list file.
+i<-1
+directory<-dir(expt_path)
 sample_name<-directory[i]
 sample_name
-#read in data (need to mamnually decide whether alpha or beta chains)
-#alpha
-data_path<-paste(expt_path,sample_name,"/","translated_sequences_alpha.txt",sep="")
+#read in data 
+
+data_path<-paste(expt_path,sample_name,sep="")
 TCRs<-read.table(data_path,stringsAsFactors=FALSE,header=FALSE,sep=",")
-#beta
-data_path<-paste(expt_path,sample_name,"/","translated_sequences_beta.txt",sep="")
-TCRs<-read.table(data_path,stringsAsFactors=FALSE,header=FALSE,sep=",")
-colnames(TCRs)<-c("V","J","Vdel","Jdel","insert","seqid","barcode","X","CDR3")
-#look for correct SP2 barcode
+
+colnames(TCRs)<-c("V","J","Vdel","Jdel","insert","seqid","barcode","X")
+
+#look for correct SP2 barcode when suitbale index present
 index<-"GTCGTGAT......GTCGTGAT......"
 #number of reads
 n<-dim(TCRs)[1]
 n
 #number with correct index seqeunce; 
 #use fuzzy matching to allow two missmatches
-
+isf<-0
 isf<-agrep(index,TCRs[,7],fixed=FALSE,max.distance=list(ins=0,del=0,sub=2))
 length(isf)
 length(isf)/n
 #select only those  sequences with barcodes
-TCRs_bc<-TCRs[isf,]
+
+if (isf != 0) {TCRs_bc<-TCRs[isf,]} else {TCRs_bc<-TCRs}
+
 #look for distribtuion of barcode freqeuncies
 bc_f<-tabulate(factor(TCRs_bc$barcode))
 #mean and variance of barcode copy number
@@ -50,7 +52,7 @@ mean(bc_f)
 var(bc_f)
 #plot and save histogram of barcode family size
 hist(bc_f,breaks=c(0,1,10,100,max(bc_f)))$counts
-output<-paste(dropbox,"R/26_05_2015/","bc_f",sample_name,".png",sep="")
+output<-paste(output,"barcode_f",sample_name,".png",sep="")
 imageSave(output)
 
 #check for unique TCR RNA sequences (i.e. unique combination of barcode and TCR)
